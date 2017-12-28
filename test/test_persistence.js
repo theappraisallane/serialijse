@@ -125,12 +125,11 @@ var deserializeZ = serialijse.deserializeZ;
             function Rectangle() {
                 this.width = 10;
                 this.height = 20;
-                Object.defineProperty(this, "area", {
-                    get: function () {
-                        return this.width * this.height;
-                    }
-                });
             }
+
+            Rectangle.prototype.area = function() {
+                return this.width * this.height;
+            };
 
             Rectangle.prototype.__defineGetter__("perimeter", function () {
                 return (this.width + this.height) * 2.0;
@@ -140,14 +139,14 @@ var deserializeZ = serialijse.deserializeZ;
             var rect1 = new Rectangle();
             rect1.width = 100;
             rect1.height = 2;
-            rect1.area.should.equal(200);
+            rect1.area().should.equal(200);
             rect1.perimeter.should.equal(204);
 
             var serializationString = serialize(rect1);
             //xx console.log(serializationString);
 
             var rect2 = deserialize(serializationString);
-            rect2.area.should.equal(200);
+            rect2.area().should.equal(200);
             rect2.perimeter.should.equal(204);
 
         });
@@ -284,51 +283,13 @@ var deserializeZ = serialijse.deserializeZ;
             mark_reloaded.children[1].name.should.eql("edgar");
         });
 
-        function MyClassWithUnpersistableMembers() {
-            this.name = "unset";
-            this._cache = [];
-            this.$someOtherStuff = 0;
-        }
-
-        MyClassWithUnpersistableMembers.serialijseOptions = {
-            ignored: [
-                "_cache",
-                /$.*/
-            ]
-        };
-        declarePersistable(MyClassWithUnpersistableMembers);
-
-
-        it("should not persist un-persistable members", function () {
-
-            var obj = new MyClassWithUnpersistableMembers();
-            obj._cache = [1, 2, 3];
-            obj.$someOtherStuff = 35;
-            obj.name = "Hello";
-            obj.$$key = "24";
-
-            var serializationString = serialize(obj);
-            var json_obj = JSON.parse(serializationString);
-
-            var reconstructedObject = deserialize(json_obj);
-
-            Should.exist(reconstructedObject.name);
-            Should.exist(reconstructedObject._cache);
-            Should.exist(reconstructedObject.$someOtherStuff);
-
-            Should.not.exist(reconstructedObject.$$key);
-            reconstructedObject._cache.should.eql([]);
-            reconstructedObject.$someOtherStuff.should.eql(0);
-
-        });
-
         function MyClassWithPostDeserializeAction() {
             this.name = "unset";
             this._cache = [];
         }
 
         MyClassWithPostDeserializeAction.prototype.reconstructCache = function () {
-            this._cache.push("reconstructCache has been called");
+            (this._cache || (this._cache = [])).push("reconstructCache has been called");
         };
         MyClassWithPostDeserializeAction.serialijseOptions = {
             ignored: [
